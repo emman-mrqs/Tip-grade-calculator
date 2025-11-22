@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIP Grade Calculator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a clean, modern look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        .grade-card {
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .result-box {
+            background-color: #ecfdf5; /* Light green for positive result emphasis */
+            border-left: 5px solid #059669; /* Green border */
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .input-group-title {
+            @apply text-xl font-bold text-gray-700 mb-4 border-b pb-2;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-2">T.I.P. Grade Calculator</h1>
+        <p class="text-lg text-gray-600 mb-8">Calculate Prelim, Midterm, or Final Grades individually based on your grading system.</p>
+
+        <!-- Grade Selection Dropdown -->
+        <div class="mb-8 p-6 bg-white rounded-xl shadow-lg">
+            <label for="grade_selector" class="block text-lg font-semibold text-gray-700 mb-3">
+                Select the Grade to Compute:
+            </label>
+            <select id="grade_selector" onchange="showSection(this.value)" class="block w-full rounded-lg border-gray-300 shadow-md focus:border-indigo-500 focus:ring-indigo-500 p-3 text-lg transition duration-150 ease-in-out">
+                <option value="none">--- Select Period ---</option>
+                <option value="prelim">1. Prelim Grade</option>
+                <option value="midterm">2. Midterm Grade</option>
+                <option value="final">3. Final Grade</option>
+            </select>
+        </div>
+
+        <!-- MAIN CALCULATION CONTAINER -->
+        <div id="calculation_container" class="space-y-8 grade-card">
+
+            <!-- Shared/Modular Input Templates -->
+            <div id="prelim_inputs" class="hidden">
+                <h3 class="input-group-title text-indigo-700">Prelim Exam and Class Standing (CS)</h3>
+                <div class="space-y-4">
+                    <!-- Exam Scores -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-xl bg-indigo-50">
+                        <div class="md:col-span-3">
+                            <label class="block text-sm font-semibold text-indigo-800 mb-2">Preliminary Examination Scores</label>
+                            <p class="text-xs text-indigo-600 mb-2">Transmutation Formula: **[ (Raw Score / HPS) x 50 ] + 50**</p>
+                        </div>
+                        <div>
+                            <label for="prelim_hps" class="block text-sm font-medium text-gray-700">Highest Possible Score (HPS)</label>
+                            <input type="number" id="prelim_hps" min="1" step="any" oninput="updateGrades()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border">
+                        </div>
+                        <div>
+                            <label for="prelim_rs" class="block text-sm font-medium text-gray-700">Raw Score (RS)</label>
+                            <input type="number" id="prelim_rs" min="0" step="any" oninput="updateGrades()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border">
+                        </div>
+                        <div class="flex flex-col justify-end">
+                            <div class="result-box bg-indigo-100 border-indigo-400">
+                                <span class="text-xs font-medium text-indigo-700">Exam Percentage Score:</span>
+                                <p id="prelim_exam_result" class="text-xl font-bold text-indigo-800">0.00%</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Class Standing -->
+                    <div class="p-4 border rounded-xl bg-indigo-50">
+                        <label for="prelim_cs" class="block text-sm font-semibold text-indigo-800 mb-2">Prelim Class Standing Percentage (%)</label>
+                        <p class="text-xs text-indigo-600 mb-2">Weighted average of Quizzes (60%), Assignments, etc. (40%).</p>
+                        <input type="number" id="prelim_cs" min="0" max="100" step="any" oninput="updateGrades()" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border">
+                    </div>
+                </div>
+            </div>
+
+            <div id="midterm_inputs" class="hidden">
+                <h3 class="input-group-title text-purple-700">Midterm Exam and Class Standing (CS)</h3>
+                <!-- Manual Prelim Grade Input (Prerequisite) -->
+                <div id="midterm_prereq" class="p-4 mb-6 rounded-xl bg-purple-100 border border-purple-300">
+                    <label for="midterm_prereq_prelim_grade" class="block text-sm font-semibold text-purple-800 mb-2">
+                        Prerequisite: Prelim Grade (%)
+                    </label>
+                    <p class="text-xs text-purple-600 mb-2">This is the **Prelim Grade** which counts for 1/3 of the Midterm Grade.</p>
+                    <input type="number" id="midterm_prereq_prelim_grade" min="0" max="100" step="any" oninput="updateGrades()" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
+                </div>
+                <!-- Exam Scores -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-xl bg-purple-50">
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-semibold text-purple-800 mb-2">Midterm Examination Scores</label>
+                        <p class="text-xs text-purple-600 mb-2">Transmutation Formula: **[ (Raw Score / HPS) x 50 ] + 50**</p>
+                    </div>
+                    <div>
+                        <label for="midterm_hps" class="block text-sm font-medium text-gray-700">Highest Possible Score (HPS)</label>
+                        <input type="number" id="midterm_hps" min="1" step="any" oninput="updateGrades()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
+                    </div>
+                    <div>
+                        <label for="midterm_rs" class="block text-sm font-medium text-gray-700">Raw Score (RS)</label>
+                        <input type="number" id="midterm_rs" min="0" step="any" oninput="updateGrades()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
+                    </div>
+                    <div class="flex flex-col justify-end">
+                        <div class="result-box bg-purple-100 border-purple-400">
+                            <span class="text-xs font-medium text-purple-700">Exam Percentage Score:</span>
+                            <p id="midterm_exam_result" class="text-xl font-bold text-purple-800">0.00%</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Class Standing -->
+                <div class="p-4 border rounded-xl bg-purple-50 mt-4">
+                    <label for="midterm_cs" class="block text-sm font-semibold text-purple-800 mb-2">Midterm Class Standing Percentage (%)</label>
+                    <p class="text-xs text-purple-600 mb-2">Weighted average of Quizzes (60%), Assignments, etc. (40%).</p>
+                    <input type="number" id="midterm_cs" min="0" max="100" step="any" oninput="updateGrades()" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
+                </div>
+            </div>
+
+            <div id="final_inputs" class="hidden">
+                <h3 class="input-group-title text-green-700">Final Exam and Class Standing (CS)</h3>
+                <!-- Manual Midterm Grade Input (Prerequisite) -->
+                <div id="final_prereq" class="p-4 mb-6 rounded-xl bg-green-100 border border-green-300">
+                    <label for="final_prereq_midterm_grade" class="block text-sm font-semibold text-green-800 mb-2">
+                        Prerequisite: Midterm Grade (%)
+                    </label>
+                    <p class="text-xs text-green-600 mb-2">This is the **Midterm Grade** which counts for 1/3 of the Final Grade.</p>
+                    <input type="number" id="final_prereq_midterm_grade" min="0" max="100" step="any" oninput="updateGrades()" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+                <!-- Exam Scores -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-xl bg-green-50">
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-semibold text-green-800 mb-2">Final Examination Scores</label>
+                        <p class="text-xs text-green-600 mb-2">Transmutation Formula: **[ (Raw Score / HPS) x 50 ] + 50**</p>
+                    </div>
+                    <div>
+                        <label for="final_hps" class="block text-sm font-medium text-gray-700">Highest Possible Score (HPS)</label>
+                        <input type="number" id="final_hps" min="1" step="any" oninput="updateGrades()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                    </div>
+                    <div>
+                        <label for="final_rs" class="block text-sm font-medium text-gray-700">Raw Score (RS)</label>
+                        <input type="number" id="final_rs" min="0" step="any" oninput="updateGrades()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                    </div>
+                    <div class="flex flex-col justify-end">
+                        <div class="result-box bg-green-100 border-green-400">
+                            <span class="text-xs font-medium text-green-700">Exam Percentage Score:</span>
+                            <p id="final_exam_result" class="text-xl font-bold text-green-800">0.00%</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Class Standing -->
+                <div class="p-4 border rounded-xl bg-green-50 mt-4">
+                    <label for="final_cs" class="block text-sm font-semibold text-green-800 mb-2">Final Class Standing Percentage (%)</label>
+                    <p class="text-xs text-green-600 mb-2">Weighted average of Quizzes (60%), Assignments, etc. (40%).</p>
+                    <input type="number" id="final_cs" min="0" max="100" step="any" oninput="updateGrades()" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+            </div>
+
+            <!-- PRIMARY RESULT DISPLAY -->
+            <div id="main_result_display" class="p-8 mt-8 rounded-2xl text-white text-center shadow-2xl hidden">
+                <h2 class="text-2xl font-bold mb-2" id="result_title">Calculated Grade:</h2>
+                <p class="text-7xl font-extrabold" id="main_grade_result">0.00</p>
+                <div id="equivalent_grade_box" class="mt-4 p-3 bg-white/20 rounded-lg hidden">
+                    <span class="text-sm font-semibold">Equivalent Grade: </span>
+                    <span class="text-lg font-bold" id="overall_equivalent_result">N/A</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>
